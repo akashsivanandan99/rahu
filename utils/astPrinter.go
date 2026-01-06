@@ -49,6 +49,22 @@ func PrintAST(node any, indent int) {
 	case parser.Operator:
 		fmt.Printf("%s%s\n", prefix, operatorString(n))
 
+	case *parser.String:
+		fmt.Printf("%sString(%s)\n", prefix, n.Value)
+
+	case *parser.Call:
+		fmt.Printf("%sCall:\n", prefix)
+		fmt.Printf("%s  Func:\n", prefix)
+		PrintAST(n.Func, indent + 4)
+		if len(n.Args) > 0{
+			fmt.Printf("%s  Args:\n", prefix)
+			for i := range n.Args{
+				PrintAST(n.Args[i], indent + 4)
+			}
+		} else {
+			fmt.Printf("%s  Args: []\n", prefix)
+		}
+
 	default:
 		fmt.Printf("%sUnknown(%T)\n", prefix, node)
 	}
@@ -64,6 +80,8 @@ func operatorString(op parser.Operator) string {
 		return "*"
 	case parser.Div:
 		return "/"
+	case parser.FloorDiv:
+		return "//"
 	case parser.Mod:
 		return "%"
 	default:
