@@ -123,6 +123,10 @@ func (p *Parser) parsePrimary() Expression {
 		case lexer.NAME:
 			n := &Name{Id: p.current.Literal}
 			p.advance()
+
+			if p.current.Type == lexer.LPAR {
+				return p.parseCall(n)
+			}
 			return n
 		case lexer.LPAR:
 			p.advance()
@@ -132,8 +136,38 @@ func (p *Parser) parsePrimary() Expression {
 			}
 			p.advance()
 			return expr
+		case lexer.STRING:
+			s := &String{Value:  p.current.Literal}
+			p.advance()
+			return s
+
 	}
 	panic(fmt.Sprintf("unexpected token %v\n", p.current))
+}
+
+
+func (p *Parser) parseCall(func_expr Expression) Expression{
+	p.advance()
+	args := []Expression{}
+
+	if p.current.Type != lexer.RPAR{
+		args = append(args, p.parseExpression(LOWEST))
+
+		for p.current.Type == lexer.COMMA{
+			p.advance()
+			args = append(args, p.parseExpression(LOWEST))
+		}
+	}
+
+	if p.current.Type != lexer.RPAR{
+		panic("epected ) after function arguments")
+	}
+	p.advance()
+
+	return &Call{
+		Func: func_expr,
+		Args:  args,
+	}
 }
 
 func (p *Parser) isOperator(t lexer.TokenType) bool {
