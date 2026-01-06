@@ -6,7 +6,7 @@ import (
 
 
 func TestSingleCharOperators(t *testing.T){
-	for input, tokType := range singleCharOps{
+	for input, tokType := range SingleCharOps{
 		l := New(input)
 		msg := l.NextToken()
 		if msg.Type != tokType{
@@ -16,7 +16,7 @@ func TestSingleCharOperators(t *testing.T){
 }
 
 func TestMultiCharOperators(t *testing.T){
-	for input, tokType := range multiCharOps{
+	for input, tokType := range MultiCharOps{
 		l := New(input)
 		msg := l.NextToken()
 		if msg.Type != tokType{
