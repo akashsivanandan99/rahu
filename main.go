@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"rahu/parser"
 	"rahu/utils"
-	"fmt"
 )
 
 func main() {

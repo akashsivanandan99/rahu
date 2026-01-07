@@ -67,7 +67,7 @@ func (p *Parser) parseStatement() Statement {
 	}
 
 	if p.current.Type == lexer.NAME || p.current.Type == lexer.NUMBER ||
-		p.current.Type == lexer.STRING || p.current.Type == lexer.LPAR{
+		p.current.Type == lexer.STRING || p.current.Type == lexer.LPAR {
 		expr := p.parseExpression(LOWEST)
 		if p.current.Type == lexer.NEWLINE {
 			p.advance()
@@ -81,18 +81,17 @@ func (p *Parser) parseStatement() Statement {
 		return funcdef
 	}
 
-
-	if p.current.Type == lexer.BREAK{
+	if p.current.Type == lexer.BREAK {
 		p.advance()
-		if p.current.Type == lexer.NEWLINE{
+		if p.current.Type == lexer.NEWLINE {
 			p.advance()
 		}
-		return &Break{} 
+		return &Break{}
 	}
 
-	if p.current.Type == lexer.CONTINUE{
+	if p.current.Type == lexer.CONTINUE {
 		p.advance()
-		if p.current.Type == lexer.NEWLINE{
+		if p.current.Type == lexer.NEWLINE {
 			p.advance()
 		}
 		return &Continue{}
@@ -108,7 +107,7 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseFor()
 	}
 
-	if p.current.Type == lexer.WHILE{
+	if p.current.Type == lexer.WHILE {
 		p.advance()
 		return p.parseWhile()
 	}
@@ -142,37 +141,36 @@ func (p *Parser) parseForTarget() Expression {
 	return first
 }
 
-
-func (p *Parser) parseWhile() Statement{
+func (p *Parser) parseWhile() Statement {
 	whileStmt := &WhileLoop{}
 
 	whileStmt.Test = p.parseExpression(LOWEST)
 
-	if p.current.Type != lexer.COLON{
+	if p.current.Type != lexer.COLON {
 		panic(`expected ':' after while condition`)
 	}
 	p.advance()
 
-	if p.current.Type != lexer.NEWLINE{
+	if p.current.Type != lexer.NEWLINE {
 		panic(`expected newline after ':'`)
 	}
 	p.advance()
 
-	if p.current.Type != lexer.INDENT{
+	if p.current.Type != lexer.INDENT {
 		panic(`expected indent after while:`)
 	}
 	p.advance()
 
 	body := []Statement{}
-	for p.current.Type != lexer.DEDENT && p.current.Type != lexer.EOF{
+	for p.current.Type != lexer.DEDENT && p.current.Type != lexer.EOF {
 		stmt := p.parseStatement()
-		if stmt != nil{
+		if stmt != nil {
 			body = append(body, stmt)
 		}
 	}
 	whileStmt.Body = body
 
-	if p.current.Type == lexer.DEDENT{
+	if p.current.Type == lexer.DEDENT {
 		p.advance()
 	}
 
@@ -264,27 +262,27 @@ func (p *Parser) parseFunc() Statement {
 
 	if p.current.Type != lexer.RPAR {
 		for {
-			if p.current.Type != lexer.NAME{
+			if p.current.Type != lexer.NAME {
 				panic("expected param name")
 			}
 
 			arg := FuncArg{
-				Name:  p.current.Literal,
+				Name: p.current.Literal,
 			}
 
 			p.advance()
 
-			if p.current.Type == lexer.EQUAL{
+			if p.current.Type == lexer.EQUAL {
 				seenDefault = true
 				p.advance()
 				arg.Default = p.parseExpression(LOWEST)
-			} else if seenDefault{
+			} else if seenDefault {
 				panic("non-default argumentn follows default argument")
 			}
 
 			args = append(args, arg)
 
-			if p.current.Type == lexer.COMMA{
+			if p.current.Type == lexer.COMMA {
 				p.advance()
 				continue
 			}
@@ -444,7 +442,7 @@ func (p *Parser) parseExpression(minBP int) Expression {
 
 		opTok := p.current
 
-		if isCompareOp(opTok.Type){
+		if isCompareOp(opTok.Type) {
 			ops := []CompareOp{}
 			rights := []Expression{}
 
@@ -459,31 +457,30 @@ func (p *Parser) parseExpression(minBP int) Expression {
 
 			left = &Compare{
 				Left:  left,
-				Ops:  ops,
-				Right:  rights,
+				Ops:   ops,
+				Right: rights,
 			}
 			continue
 		}
 
-		if opTok.Type == lexer.AND || opTok.Type == lexer.OR{
+		if opTok.Type == lexer.AND || opTok.Type == lexer.OR {
 			p.advance()
 			right := p.parseExpression(bp)
 
-			if boolOp, ok := left.(*BooleanOp); ok{
-				if (opTok.Type == lexer.AND && boolOp.Operator == And) || (
-					opTok.Type == lexer.OR && boolOp.Operator == Or){
+			if boolOp, ok := left.(*BooleanOp); ok {
+				if (opTok.Type == lexer.AND && boolOp.Operator == And) || (opTok.Type == lexer.OR && boolOp.Operator == Or) {
 					boolOp.Values = append(boolOp.Values, right)
 					continue
 				}
 			}
 
 			op := And
-			if opTok.Type == lexer.OR{
+			if opTok.Type == lexer.OR {
 				op = Or
 			}
 			left = &BooleanOp{
-				Operator:  op,
-				Values: []Expression{left, right},
+				Operator: op,
+				Values:   []Expression{left, right},
 			}
 			continue
 		}
@@ -500,7 +497,6 @@ func (p *Parser) parseExpression(minBP int) Expression {
 
 	return left
 }
-
 
 func isCompareOp(t lexer.TokenType) bool {
 	switch t {
@@ -536,11 +532,11 @@ func (p *Parser) parsePrimary() Expression {
 		return n
 	case lexer.TRUE:
 		p.advance()
-		return &Boolean{Value:  true}
+		return &Boolean{Value: true}
 
 	case lexer.FALSE:
 		p.advance()
-		return &Boolean{Value:  false}
+		return &Boolean{Value: false}
 	case lexer.NAME:
 		n := &Name{Id: p.current.Literal}
 		p.advance()
@@ -593,18 +589,16 @@ func (p *Parser) parsePrimary() Expression {
 	panic(fmt.Sprintf("unexpected token %v\n", p.current))
 }
 
-
-
-func (p *Parser) parseList() Expression{
+func (p *Parser) parseList() Expression {
 	elts := []Expression{}
 
-	if p.current.Type != lexer.RSQB{
+	if p.current.Type != lexer.RSQB {
 		elts = append(elts, p.parseExpression(LOWEST))
 
-		for p.current.Type == lexer.COMMA{
+		for p.current.Type == lexer.COMMA {
 			p.advance()
 
-			if p.current.Type == lexer.RSQB{
+			if p.current.Type == lexer.RSQB {
 				break
 			}
 
@@ -612,12 +606,12 @@ func (p *Parser) parseList() Expression{
 		}
 	}
 
-	if p.current.Type != lexer.RSQB{
+	if p.current.Type != lexer.RSQB {
 		panic(`expected ']' after list elements`)
 	}
 
 	p.advance()
-	return &List{Elts:  elts}
+	return &List{Elts: elts}
 }
 
 func (p *Parser) parseCall(func_expr Expression) Expression {

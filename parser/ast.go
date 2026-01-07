@@ -56,7 +56,7 @@ type Module struct {
 }
 
 type FuncArg struct {
-	Name     string
+	Name    string
 	Default Expression
 }
 
@@ -96,7 +96,7 @@ type For struct {
 
 func (f *For) statementNode() {}
 
-type WhileLoop struct{
+type WhileLoop struct {
 	Test Expression
 	Body []Statement
 }
@@ -158,7 +158,7 @@ type ExprStmt struct {
 
 func (e *ExprStmt) statementNode() {}
 
-type Boolean struct{
+type Boolean struct {
 	Value bool
 }
 
@@ -171,21 +171,21 @@ const (
 	Or
 )
 
-type BooleanOp struct{
+type BooleanOp struct {
 	Operator BooleanOperator
-	Values []Expression
+	Values   []Expression
 }
 
-func(bo *BooleanOp) expressionNode(){}
+func (bo *BooleanOp) expressionNode() {}
 
-
-type List struct{
+type List struct {
 	Elts []Expression
 }
 
-func (l *List) expressionNode(){}
+func (l *List) expressionNode() {}
 
 type Break struct{}
+
 func (b *Break) statementNode() {}
 
 type Continue struct{}
