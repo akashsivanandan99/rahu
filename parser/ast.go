@@ -57,12 +57,12 @@ type Module struct {
 
 type FuncArg struct {
 	Name     string
-	Defauult Expression
+	Default Expression
 }
 
 type FunctionDef struct {
 	Name string
-	Args []string
+	Args []FuncArg
 	Body []Statement
 }
 
@@ -95,6 +95,13 @@ type For struct {
 }
 
 func (f *For) statementNode() {}
+
+type WhileLoop struct{
+	Test Expression
+	Body []Statement
+}
+
+func (w *WhileLoop) statementNode() {}
 
 type Call struct {
 	Func Expression
@@ -150,3 +157,37 @@ type ExprStmt struct {
 }
 
 func (e *ExprStmt) statementNode() {}
+
+type Boolean struct{
+	Value bool
+}
+
+func (b *Boolean) expressionNode() {}
+
+type BooleanOperator int
+
+const (
+	And BooleanOperator = iota
+	Or
+)
+
+type BooleanOp struct{
+	Operator BooleanOperator
+	Values []Expression
+}
+
+func(bo *BooleanOp) expressionNode(){}
+
+
+type List struct{
+	Elts []Expression
+}
+
+func (l *List) expressionNode(){}
+
+type Break struct{}
+func (b *Break) statementNode() {}
+
+type Continue struct{}
+
+func (c *Continue) statementNode() {}
