@@ -89,6 +89,53 @@ func PrintAST(node any, indent int) {
 	case string:
 		fmt.Printf("%s%s\n", prefix, n)
 
+	case parser.FuncArg:
+		fmt.Printf("%sName:%s\n", prefix, n.Name)
+		if n.Default != nil{
+			fmt.Printf("%sDefault:\n", prefix)
+			PrintAST(n.Default, indent + 2)
+		}
+
+	case *parser.WhileLoop:
+		fmt.Printf("%sWhile:\n", prefix)
+		fmt.Printf("%s  TestCondition:\n", prefix)
+		PrintAST(n.Test, indent + 4)
+		fmt.Printf("%s  Body:\n", prefix)
+		for i := range n.Body{
+			PrintAST(n.Body[i], indent + 4)
+		}
+
+	case *parser.Boolean:
+		fmt.Printf("%sBoolean(%t)\n", prefix, n.Value)
+
+	case *parser.Break:
+		fmt.Printf("%sBreak()\n", prefix)
+
+
+	case *parser.Continue:
+		fmt.Printf("%sContinue()\n", prefix)
+
+	case *parser.BooleanOp:
+		fmt.Printf("%sBooleanOp:\n", prefix)
+		fmt.Printf("%s  Operator:\n", prefix)
+		switch n.Operator{
+		case parser.And:
+			fmt.Printf("%s    And\n", prefix)
+		case parser.Or:
+			fmt.Printf("%s    Or\n", prefix)
+		}
+		fmt.Printf("%s  Values:\n", prefix)
+		for i := range(n.Values){
+			PrintAST(n.Values[i], indent + 4)
+		}
+
+	case *parser.List:
+		fmt.Printf("%sList: [\n", prefix)
+		for i := range n.Elts{
+			PrintAST(n.Elts[i], indent + 2)
+		}
+		fmt.Printf("%s]\n", prefix)
+
 	case *parser.FunctionDef:
 		fmt.Printf("%sFunctionDef:\n", prefix)
 		fmt.Printf("%s  FuncName (%s)\n", prefix, n.Name)
