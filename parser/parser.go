@@ -226,7 +226,7 @@ func (p *Parser) parseFor() Statement {
 
 // return already consumed while receiving
 func (p *Parser) parseReturn() Statement {
-	if p.current.Type == lexer.NEWLINE {
+	if p.current.Type == lexer.NEWLINE || p.current.Type == lexer.EOF {
 		p.advance()
 		return &Return{Value: nil}
 	}
