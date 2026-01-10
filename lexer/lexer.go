@@ -351,7 +351,7 @@ func (l *Lexer) NextToken() Token {
 		if l.isDigit() {
 			tok.Literal = l.readNumber()
 			tok.Type = NUMBER
-			tok.EndCol = l.col -1
+			tok.EndCol = l.col - 1
 			return tok
 		}
 
@@ -398,7 +398,7 @@ func (l *Lexer) NextToken() Token {
 				tok.Type = tokType
 				tok.Literal = tokStr
 				tok.Line = l.line
-				tok.EndCol = l.col -1
+				tok.EndCol = l.col - 1
 				tok.Col = startCol
 				return tok
 			} else if l.ch == '"' && l.peek() == '"' && l.peekAhead(1) == '"' {
@@ -406,7 +406,7 @@ func (l *Lexer) NextToken() Token {
 				tok.Type = tokType
 				tok.Literal = tokStr
 				tok.Line = l.line
-				tok.EndCol = l.col -1
+				tok.EndCol = l.col - 1
 				tok.Col = startCol
 				return tok
 			} else {
@@ -415,7 +415,7 @@ func (l *Lexer) NextToken() Token {
 				tokStr, tokType := l.readString(openingQuote)
 				tok.Type = tokType
 				tok.Literal = tokStr
-				tok.EndCol = l.col -1
+				tok.EndCol = l.col - 1
 				tok.Col = startCol
 				return tok
 			}
