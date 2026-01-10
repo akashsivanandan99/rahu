@@ -51,7 +51,7 @@ func TestSingleNumber(t *testing.T) {
 
 func TestBasicIndent(t *testing.T) {
 	input := "def foo():\n    pass"
-	want := []TokenType{NAME, NAME, LPAR, RPAR, COLON, NEWLINE, INDENT, NAME, EOF}
+	want := []TokenType{DEF, NAME, LPAR, RPAR, COLON, NEWLINE, INDENT, PASS, EOF}
 	l := New(input)
 	count := 0
 	for {
