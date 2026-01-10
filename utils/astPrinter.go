@@ -2,200 +2,219 @@ package utils
 
 import (
 	"fmt"
-	"rahu/parser"
+	"io"
+	"os"
 	"strings"
+
+	"golang.org/x/term"
+
+	"rahu/parser"
 )
 
-func PrintAST(node any, indent int) {
+const (
+	reset  = "\033[0m"
+	blue   = "\033[34m" // node types
+	cyan   = "\033[36m" // fields
+	green  = "\033[32m" // literals
+	yellow = "\033[33m" // operators / keywords
+)
+
+type PrintOptions struct {
+	UseColor bool
+}
+
+func c(opt PrintOptions, code string) string {
+	if !opt.UseColor {
+		return ""
+	}
+	return code
+}
+
+func nodeLabel(opt PrintOptions, s string) string {
+	return c(opt, blue) + s + c(opt, reset)
+}
+
+func field(opt PrintOptions, s string) string {
+	return c(opt, cyan) + s + c(opt, reset)
+}
+
+func literal(opt PrintOptions, s string) string {
+	return c(opt, green) + s + c(opt, reset)
+}
+
+func keyword(opt PrintOptions, s string) string {
+	return c(opt, yellow) + s + c(opt, reset)
+}
+
+func PrintAST(w io.Writer, node any) {
+	useColor := false
+	if f, ok := w.(*os.File); ok {
+		useColor = term.IsTerminal(int(f.Fd()))
+	}
+
+	opts := PrintOptions{UseColor: useColor}
+
+	printAST(w, node, 0, opts)
+}
+
+func printAST(w io.Writer, node any, indent int, opts PrintOptions) {
 	prefix := strings.Repeat(" ", indent)
 
 	switch n := node.(type) {
 
 	case *parser.Module:
-		fmt.Printf("%sModule:\n", prefix)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "Module:"))
 		for _, stmt := range n.Body {
-			PrintAST(stmt, indent+2)
+			printAST(w, stmt, indent+2, opts)
 		}
 
 	case *parser.Assign:
-		fmt.Printf("%sAssign:\n", prefix)
-
-		fmt.Printf("%s  Targets:\n", prefix)
-		for _, target := range n.Targets {
-			PrintAST(target, indent+4)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "Assign:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Targets:"))
+		for _, t := range n.Targets {
+			printAST(w, t, indent+4, opts)
 		}
-
-		fmt.Printf("%s  Value:\n", prefix)
-		PrintAST(n.Value, indent+4)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Value:"))
+		printAST(w, n.Value, indent+4, opts)
 
 	case *parser.BinOp:
-		fmt.Printf("%sBinOp:\n", prefix)
-
-		fmt.Printf("%s  Left:\n", prefix)
-		PrintAST(n.Left, indent+4)
-
-		fmt.Printf("%s  Op:\n", prefix)
-		PrintAST(n.Op, indent+4)
-
-		fmt.Printf("%s  Right:\n", prefix)
-		PrintAST(n.Right, indent+4)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "BinOp:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Left:"))
+		printAST(w, n.Left, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Op:"))
+		printAST(w, n.Op, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Right:"))
+		printAST(w, n.Right, indent+4, opts)
 
 	case *parser.Name:
-		fmt.Printf("%sName(%s)\n", prefix, n.Id)
+		fmt.Fprintf(w, "%s%s\n", prefix, literal(opts, "Name("+n.Id+")"))
 
 	case *parser.Number:
-		fmt.Printf("%sNumber(%s)\n", prefix, n.Value)
+		fmt.Fprintf(w, "%s%s\n", prefix, literal(opts, "Number("+n.Value+")"))
 
 	case parser.Operator:
-		fmt.Printf("%s%s\n", prefix, operatorString(n))
+		fmt.Fprintf(w, "%s%s\n", prefix, keyword(opts, operatorString(n)))
 
 	case *parser.String:
-		fmt.Printf("%sString(%s)\n", prefix, n.Value)
+		fmt.Fprintf(w, "%s%s\n", prefix, literal(opts, `String("`+n.Value+`")`))
+
+	case *parser.Boolean:
+		fmt.Fprintf(w, "%s%s\n", prefix, literal(opts, fmt.Sprintf("Boolean(%t)", n.Value)))
 
 	case *parser.Call:
-		fmt.Printf("%sCall:\n", prefix)
-		fmt.Printf("%s  Func:\n", prefix)
-		PrintAST(n.Func, indent+4)
-		if len(n.Args) > 0 {
-			fmt.Printf("%s  Args:\n", prefix)
-			for i := range n.Args {
-				PrintAST(n.Args[i], indent+4)
-			}
-		} else {
-			fmt.Printf("%s  Args: []\n", prefix)
-		}
-
-	case *parser.If:
-		fmt.Printf("%sIf:\n", prefix)
-		fmt.Printf("%s  TestCondition:\n", prefix)
-		PrintAST(n.Test, indent+4)
-		fmt.Printf("%s  Body:\n", prefix)
-		for i := range n.Body {
-			PrintAST(n.Body[i], indent+4)
-		}
-		if len(n.Orelse) > 0 {
-			fmt.Printf("%s  Orelse:\n", prefix)
-			for i := range n.Orelse {
-				PrintAST(n.Orelse[i], indent+4)
-			}
-		} else {
-			fmt.Printf("%s Orelse: nil\n", prefix)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "Call:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Func:"))
+		printAST(w, n.Func, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Args:"))
+		for _, a := range n.Args {
+			printAST(w, a, indent+4, opts)
 		}
 
 	case *parser.ExprStmt:
-		fmt.Printf("%sExprStmt:\n", prefix)
-		PrintAST(n.Value, indent+2)
-
-	case string:
-		fmt.Printf("%s%s\n", prefix, n)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "ExprStmt:"))
+		printAST(w, n.Value, indent+2, opts)
 
 	case parser.FuncArg:
-		fmt.Printf("%sName:%s\n", prefix, n.Name)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "FuncArg("+n.Name+")"))
 		if n.Default != nil {
-			fmt.Printf("%sDefault:\n", prefix)
-			PrintAST(n.Default, indent+2)
+			fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Default:"))
+			printAST(w, n.Default, indent+4, opts)
 		}
-
-	case *parser.WhileLoop:
-		fmt.Printf("%sWhile:\n", prefix)
-		fmt.Printf("%s  TestCondition:\n", prefix)
-		PrintAST(n.Test, indent+4)
-		fmt.Printf("%s  Body:\n", prefix)
-		for i := range n.Body {
-			PrintAST(n.Body[i], indent+4)
-		}
-
-	case *parser.Boolean:
-		fmt.Printf("%sBoolean(%t)\n", prefix, n.Value)
-
-	case *parser.Break:
-		fmt.Printf("%sBreak()\n", prefix)
-
-	case *parser.Continue:
-		fmt.Printf("%sContinue()\n", prefix)
-
-	case *parser.BooleanOp:
-		fmt.Printf("%sBooleanOp:\n", prefix)
-		fmt.Printf("%s  Operator:\n", prefix)
-		switch n.Operator {
-		case parser.And:
-			fmt.Printf("%s    And\n", prefix)
-		case parser.Or:
-			fmt.Printf("%s    Or\n", prefix)
-		}
-		fmt.Printf("%s  Values:\n", prefix)
-		for i := range n.Values {
-			PrintAST(n.Values[i], indent+4)
-		}
-
-	case *parser.List:
-		fmt.Printf("%sList: [\n", prefix)
-		for i := range n.Elts {
-			PrintAST(n.Elts[i], indent+2)
-		}
-		fmt.Printf("%s]\n", prefix)
 
 	case *parser.FunctionDef:
-		fmt.Printf("%sFunctionDef:\n", prefix)
-		fmt.Printf("%s  FuncName (%s)\n", prefix, n.Name)
-		fmt.Printf("%s  Args:\n", prefix)
-		for i := range n.Args {
-			PrintAST(n.Args[i], indent+4)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "FunctionDef("+n.Name+"):"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Args:"))
+		for _, a := range n.Args {
+			printAST(w, a, indent+4, opts)
 		}
-
-		fmt.Printf("%s  Body:\n", prefix)
-		for i := range n.Body {
-			PrintAST(n.Body[i], indent+4)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Body:"))
+		for _, s := range n.Body {
+			printAST(w, s, indent+4, opts)
 		}
 
 	case *parser.Return:
-		fmt.Printf("%sReturn:\n", prefix)
-		PrintAST(n.Value, indent+2)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "Return:"))
+		printAST(w, n.Value, indent+2, opts)
 
-	case parser.CompareOp:
-		fmt.Printf("%sCompareOp:\n", prefix)
-		switch n {
-		case parser.Eq:
-			fmt.Printf("%s  Eq()\n", prefix)
-		case parser.Gt:
-			fmt.Printf("%s Gt()\n", prefix)
-		case parser.Lt:
-			fmt.Printf("%s Lt()\n", prefix)
-		case parser.GtE:
-			fmt.Printf("%s GtE()\n", prefix)
-		case parser.LtE:
-			fmt.Printf("%s LtE()\n", prefix)
+	case *parser.If:
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "If:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Test:"))
+		printAST(w, n.Test, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Body:"))
+		for _, s := range n.Body {
+			printAST(w, s, indent+4, opts)
+		}
+		if len(n.Orelse) > 0 {
+			fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Else:"))
+			for _, s := range n.Orelse {
+				printAST(w, s, indent+4, opts)
+			}
 		}
 
-	case *parser.Compare:
-		fmt.Printf("%sCompare:\n", prefix)
-		fmt.Printf("%s  Left:\n", prefix)
-
-		PrintAST(n.Left, indent+4)
-
-		fmt.Printf("%s  Ops:\n", prefix)
-		for i := range n.Ops {
-			PrintAST(n.Ops[i], indent+4)
-		}
-
-		fmt.Printf("%s  Right:\n", prefix)
-
-		for i := range n.Right {
-			PrintAST(n.Right[i], indent+4)
+	case *parser.WhileLoop:
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "While:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Test:"))
+		printAST(w, n.Test, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Body:"))
+		for _, s := range n.Body {
+			printAST(w, s, indent+4, opts)
 		}
 
 	case *parser.For:
-		fmt.Printf("%sFor:\n", prefix)
-		fmt.Printf("%s  Target:\n", prefix)
-		PrintAST(n.Target, indent+4)
-		fmt.Printf("%s  Iter:\n", prefix)
-		PrintAST(n.Iter, indent+4)
-		fmt.Printf("%s  Body:\n", prefix)
-		for i := range n.Body {
-			PrintAST(n.Body[i], indent+4)
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "For:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Target:"))
+		printAST(w, n.Target, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Iter:"))
+		printAST(w, n.Iter, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Body:"))
+		for _, s := range n.Body {
+			printAST(w, s, indent+4, opts)
 		}
+
+	case *parser.List:
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "List:"))
+		for _, e := range n.Elts {
+			printAST(w, e, indent+2, opts)
+		}
+
+	case *parser.BooleanOp:
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "BooleanOp:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Operator:"))
+		switch n.Operator {
+		case parser.And:
+			fmt.Fprintf(w, "%s    %s\n", prefix, keyword(opts, "And"))
+		case parser.Or:
+			fmt.Fprintf(w, "%s    %s\n", prefix, keyword(opts, "Or"))
+		}
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Values:"))
+		for _, v := range n.Values {
+			printAST(w, v, indent+4, opts)
+		}
+
+	case parser.CompareOp:
+		fmt.Fprintf(w, "%s%s\n", prefix, keyword(opts, "CompareOp("+compareOpString(n)+")"))
+
+	case *parser.Compare:
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "Compare:"))
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Left:"))
+		printAST(w, n.Left, indent+4, opts)
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Ops:"))
+		for _, op := range n.Ops {
+			printAST(w, op, indent+4, opts)
+		}
+		fmt.Fprintf(w, "%s  %s\n", prefix, field(opts, "Right:"))
+		for _, r := range n.Right {
+			printAST(w, r, indent+4, opts)
+		}
+
+	case *parser.Break:
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "Break"))
+
+	case *parser.Continue:
+		fmt.Fprintf(w, "%s%s\n", prefix, nodeLabel(opts, "Continue"))
+
 	default:
-		fmt.Printf("%sUnknown(%T)\n", prefix, node)
+		fmt.Fprintf(w, "%sUnknown(%T)\n", prefix, node)
 	}
 }
 
@@ -213,6 +232,25 @@ func operatorString(op parser.Operator) string {
 		return "//"
 	case parser.Mod:
 		return "%"
+	default:
+		return "<?>"
+	}
+}
+
+func compareOpString(op parser.CompareOp) string {
+	switch op {
+	case parser.Eq:
+		return "=="
+	case parser.NotEq:
+		return "!="
+	case parser.Lt:
+		return "<"
+	case parser.LtE:
+		return "<="
+	case parser.Gt:
+		return ">"
+	case parser.GtE:
+		return ">="
 	default:
 		return "<?>"
 	}
