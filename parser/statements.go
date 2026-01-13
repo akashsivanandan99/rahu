@@ -284,8 +284,12 @@ func (p *Parser) parseFunc() Statement {
 				panic("expected param name")
 			}
 
+			start := Position{Line: p.current.Line, Col: p.current.Col}
+			end := Position{Line: p.current.Line, Col: p.current.EndCol}
+
 			arg := FuncArg{
 				Name: p.current.Literal,
+				Pos:  Range{Start: start, End: end},
 			}
 
 			p.advance()
