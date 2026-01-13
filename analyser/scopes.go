@@ -9,7 +9,8 @@ type ScopeBuilder struct {
 }
 
 func BuildScopes(module *parser.Module) *Scope {
-	global := NewScope(nil, ScopeGlobal)
+	builtins := NewBuiltinScope()
+	global := NewScope(builtins, ScopeGlobal)
 	b := &ScopeBuilder{current: global}
 	b.visitModule(module)
 	return global

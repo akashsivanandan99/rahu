@@ -37,6 +37,7 @@ const (
 	ScopeGlobal ScopeKind = iota
 	ScopeFunction
 	ScopeBlock
+	ScopeBuiltin
 )
 
 type Scope struct {
@@ -58,6 +59,28 @@ func NewScope(parent *Scope, kind ScopeKind) *Scope {
 	}
 
 	return scope
+}
+
+func NewBuiltinScope() *Scope {
+	s := NewScope(nil, ScopeBuiltin)
+
+	for _, name := range []string{
+		"print",
+		"range",
+		"len",
+		"int",
+		"str",
+		"float",
+		"bool",
+	} {
+		s.Define(&Symbol{
+			Name: name,
+			Kind: SymFunction,
+			Span: parser.Range{},
+		})
+	}
+
+	return s
 }
 
 func NewSymbol(name string, kind SymbolKind, span parser.Range) *Symbol {
