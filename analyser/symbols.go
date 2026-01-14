@@ -21,6 +21,8 @@ const (
 	SymClass
 	SymModule
 	SymImport
+	SymConstant
+	SymType
 )
 
 type Symbol struct {
@@ -64,14 +66,88 @@ func NewScope(parent *Scope, kind ScopeKind) *Scope {
 func NewBuiltinScope() *Scope {
 	s := NewScope(nil, ScopeBuiltin)
 
+	// populating constants
+	for _, name := range []string{"True", "False", "None"} {
+		s.Define(
+			&Symbol{
+				Name: name,
+				Kind: SymConstant,
+				Span: parser.Range{},
+			})
+	}
+
+	// types
 	for _, name := range []string{
-		"print",
-		"range",
+		"int", "str", "float", "list", "tuple", "dict", "set",
+		"frozenset", "bytes", "bytearray", "complex", "object",
+	} {
+		s.Define(&Symbol{
+			Name: name,
+			Kind: SymType,
+			Span: parser.Range{},
+		})
+	}
+
+	// populating pure funcs
+	for _, name := range []string{
+		"abs",
+		"aiter",
+		"all",
+		"anext",
+		"any",
+		"ascii",
+		"bin",
+		"breakpoint",
+		"callable",
+		"chr",
+		"classmethod",
+		"compile",
+		"delattr",
+		"dir",
+		"divmod",
+		"enumerate",
+		"eval",
+		"exec",
+		"filter",
+		"format",
+		"getattr",
+		"hasattr",
+		"globals",
+		"hash",
+		"help",
+		"hex",
+		"id",
+		"input",
+		"isinstance",
+		"issubclass",
+		"iter",
 		"len",
-		"int",
-		"str",
-		"float",
-		"bool",
+		"locals",
+		"map",
+		"max",
+		"memoryview",
+		"min",
+		"next",
+		"oct",
+		"open",
+		"ord",
+		"pow",
+		"print",
+		"property",
+		"range",
+		"repr",
+		"reversed",
+		"round",
+		"setattr",
+		"slice",
+		"sorted",
+		"staticmethod",
+		"sum",
+		"super",
+		"type",
+		"vars",
+		"zip",
+		"__import__",
 	} {
 		s.Define(&Symbol{
 			Name: name,
@@ -129,6 +205,10 @@ func (k SymbolKind) String() string {
 		return "module"
 	case SymVariable:
 		return "variable"
+	case SymConstant:
+		return "constant"
+	case SymType:
+		return "type"
 	default:
 		return "unknown"
 	}
