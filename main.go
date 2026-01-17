@@ -30,7 +30,7 @@ func main() {
 			fmt.Printf("  Error at %v: %s\n", err.Span, err.Msg)
 		}
 	} else {
-		fmt.Println("✓ No semantic errors")
+		fmt.Printf("%s✓%s No semantic errors\n", "\033[32m", "\033[0m")
 	}
 
 	fmt.Println("\nResolved names:")
@@ -70,18 +70,22 @@ func printResolvedNames(resolved map[*parser.Name]*analyser.Symbol) {
 		// Format output
 		if scopeDesc == "builtin" {
 			fmt.Printf(
-				"  %d:%-3d  %-12s → builtin %s\n",
+				"  %d:%-3d  %-12s %s→%s builtin %s\n",
 				name.Pos.Start.Line,
 				name.Pos.Start.Col,
 				name.ID,
+				"\033[32m",
+				"\033[0m",
 				sym.Name,
 			)
 		} else {
 			fmt.Printf(
-				"  %d:%-3d  %-12s → %s (defined at %d:%d)\n",
+				"  %d:%-3d  %-12s %s→%s %s (defined at %d:%d)\n",
 				name.Pos.Start.Line,
 				name.Pos.Start.Col,
 				name.ID,
+				"\033[32m",
+				"\033[0m",
 				sym.Name,
 				sym.Span.Start.Line,
 				sym.Span.Start.Col,
