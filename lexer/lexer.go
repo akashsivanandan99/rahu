@@ -96,9 +96,22 @@ func (l *Lexer) peekAhead(delta int) byte {
 	return l.input[nextPos]
 }
 
-func (l *Lexer) skipWhitespace() {
-	for l.ch == ' ' || l.ch == '\t' {
+func (l *Lexer) skipComment() {
+	for l.ch != '\n' && l.ch != 0 {
 		l.readChar()
+	}
+}
+
+func (l *Lexer) skipWhitespaceAndComments() {
+	for {
+		switch l.ch {
+		case ' ', '\t':
+			l.readChar()
+		case '#':
+			l.skipComment()
+		default:
+			return
+		}
 	}
 }
 
@@ -350,7 +363,7 @@ func (l *Lexer) NextToken() Token {
 		}
 	}
 
-	l.skipWhitespace()
+	l.skipWhitespaceAndComments()
 
 	tok.Line = l.line
 	tok.Col = l.col
