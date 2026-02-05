@@ -79,3 +79,26 @@ const (
 	TDSKFull        TextDocumentSyncKind = 1
 	TDSKIncremental TextDocumentSyncKind = 2
 )
+
+type DidOpenTextDocumentParams struct {
+	TextDocument TextDocumentItem `json:"textDocument"`
+}
+
+type TextDocumentContentChangeEvent struct {
+	Range       *Range `json:"range,omitempty"`
+	RangeLength *int   `json:"rangeLength,omitempty"`
+	Text        string `json:"text"`
+}
+
+func (e TextDocumentContentChangeEvent) IsFullChange() bool {
+	return e.Range == nil
+}
+
+func (e TextDocumentContentChangeEvent) IsIncremental() bool {
+	return e.Range != nil
+}
+
+type DidChangeTextDocumentParams struct {
+	TextDocument  VersionedDocumentIdentifier      `json:"textDocument"`
+	ContentChange []TextDocumentContentChangeEvent `json:"contentChanges"`
+}
