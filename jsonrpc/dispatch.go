@@ -23,6 +23,12 @@ func dispatchNotification(conn *Conn, notif *Notification) {
 	if !ok {
 		return
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			conn.Close()
+		}
+	}()
 	handler(notif.Params)
 }
 
@@ -36,7 +42,9 @@ func dispatchRequest(conn *Conn, req *Request) {
 
 	if !ok {
 		resp.Error = MethodNotFoundError()
-		_ = conn.SendResponse(resp)
+		if err := conn.SendResponse(resp); err != nil {
+			conn.Close()
+		}
 		return
 	}
 
