@@ -2,6 +2,9 @@
 // data structures for JSON-RPC communication. The types in this package are
 // designed to closely follow the LSP specification and preserve wire-level
 // compatibility.
+//
+// This package provides types for positions, ranges, documents, diagnostics,
+// and other LSP constructs, ensuring seamless integration with LSP clients.
 package lsp
 
 import (
@@ -9,48 +12,76 @@ import (
 )
 
 type Position struct {
-	Line      int `json:"line"`
+	// Line represents the zero-based line number in a document.
+	Line int `json:"line"`
+
+	// Character represents the zero-based character offset within the line.
 	Character int `json:"character"`
 }
 
-type DocumentURI string
+type DocumentURI string // DocumentURI is a string representing the URI of a document.
 
 type Range struct {
+	// Start represents the starting position of the range.
 	Start Position `json:"start"`
-	End   Position `json:"end"`
+
+	// End represents the ending position of the range.
+	End Position `json:"end"`
 }
 
 type TextDocumentIdentifier struct {
+	// URI is the unique identifier of the text document.
 	URI DocumentURI `json:"uri"`
 }
 
 type VersionedDocumentIdentifier struct {
-	URI     DocumentURI `json:"uri"`
-	Version int         `json:"version"`
+	// URI is the unique identifier of the text document.
+	URI DocumentURI `json:"uri"`
+
+	// Version is the version number of the document.
+	Version int `json:"version"`
 }
 
 type TextDocumentItem struct {
-	URI        DocumentURI `json:"uri"`
-	LanguageID string      `json:"languageId"`
-	Version    int         `json:"version"`
-	Text       string      `json:"text"`
+	// URI is the unique identifier of the text document.
+	URI DocumentURI `json:"uri"`
+
+	// LanguageID specifies the language of the document (e.g., "python").
+	LanguageID string `json:"languageId"`
+
+	// Version is the version number of the document.
+	Version int `json:"version"`
+
+	// Text contains the full content of the document.
+	Text string `json:"text"`
 }
 
 type TextDocumentPositionParams struct {
+	// TextDocument identifies the document in which the position is specified.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
-	Position     Position               `json:"position"`
+
+	// Position specifies the location within the document.
+	Position Position `json:"position"`
 }
 
 type DocumentFilter struct {
+	// Language specifies the language of the document (e.g., "go").
 	Language string `json:"language"`
-	Scheme   string `json:"scheme"`
-	Pattern  string `json:"pattern"`
+
+	// Scheme specifies the URI scheme (e.g., "file").
+	Scheme string `json:"scheme"`
+
+	// Pattern specifies the glob pattern to match document paths.
+	Pattern string `json:"pattern"`
 }
 
-type DocumentSelector []DocumentFilter
+type DocumentSelector []DocumentFilter // DocumentSelector is a list of filters used to match documents.
 
 type TextEdit struct {
-	Range   Range  `json:"range"`
+	// Range specifies the range of text to be replaced.
+	Range Range `json:"range"`
+
+	// NewText is the text to replace the specified range with.
 	NewText string `json:"newText"`
 }
 
@@ -75,7 +106,7 @@ type AnnotatedTextEdit struct {
 
 type TextDocumentEdit struct {
 	TextDocument OptionalVersionedTextDocumentIdentifier `json:"textDocument"`
-	Edits        any                                     `json:"edits"`
+	Edits        any                                     `json:"edits"` // []TextEdit | []AnnotatedTextEdit
 }
 
 type Location struct {
@@ -89,12 +120,21 @@ type WorkspaceEdit struct {
 	ChangeAnnotations map[ChangeAnnotationIdentifier]ChangeAnnotation `json:"changeAnnotations,omitempty"`
 }
 
+type Severity int
+
+const (
+	SeverityError Severity = iota
+	SeverityWarning
+	SeverityInformation
+	SeverityHint
+)
+
 type Diagnostic struct {
-	Range    Range  `json:"range"`
-	Severity int    `json:"severity,omitempty"`
-	Code     any    `json:"code,omitempty"`
-	Source   string `json:"source,omitempty"`
-	Message  string `json:"message"`
+	Range    Range    `json:"range"`
+	Severity Severity `json:"severity,omitempty"`
+	Code     any      `json:"code,omitempty"`
+	Source   string   `json:"source,omitempty"`
+	Message  string   `json:"message"`
 }
 
 type LocationLink struct {
@@ -243,3 +283,22 @@ type InitializeParams struct {
 	InitializationOptions j.RawMessage       `json:"initializationOptions,omitempty"`
 	Capabilities          ClientCapabilities `json:"capabilities"`
 }
+
+type InitializeResult struct {
+	Capabilities ServerCapabilities `json:"capabilities"`
+	ServerInfo   *ClientInfo        `json:"serverInfo,omitempty"`
+}
+
+type ServerCapabilities struct {
+	TextDocumentSync   TextDocumentSyncKind `json:"textDocumentSync"`
+	HoverProvider      bool                 `json:"hoverProvider"`
+	CompletionProvider map[string]any       `json:"completionProvider,omitempty"`
+}
+
+type TextDocumentSyncKind int
+
+const (
+	TDSKNone        TextDocumentSyncKind = 0
+	TDSKFull        TextDocumentSyncKind = 1
+	TDSKIncremental TextDocumentSyncKind = 2
+)
