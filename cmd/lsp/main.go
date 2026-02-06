@@ -21,7 +21,7 @@ func main() {
 
 	conn.Start()
 
-	go jsonrpc.Dispatch(conn)
+	jsonrpc.Dispatch(conn)
 
 	conn.Wait()
 }

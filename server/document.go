@@ -167,8 +167,9 @@ func (s *Server) Initialize(
 
 	return &lsp.InitializeResult{
 		Capabilities: lsp.ServerCapabilities{
-			TextDocumentSync: lsp.TDSKFull,
-			HoverProvider:    true,
+			TextDocumentSync:   lsp.TDSKFull,
+			HoverProvider:      true,
+			DiagnosticProvider: true,
 		},
 	}, nil
 }

@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"context"
 	j "encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"sync"
 )
 
@@ -59,12 +61,17 @@ func (c *Conn) readLoop() {
 		}
 		close(c.incoming)
 	}()
+
 	for {
 		msg, err := readBody(c.r)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return
+			}
 			c.fail(fmt.Errorf("read error: %w", err))
 			return
 		}
+
 		select {
 		case c.incoming <- msg:
 		case <-c.ctx.Done():

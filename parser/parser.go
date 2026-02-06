@@ -58,6 +58,28 @@ func (p *Parser) error(span Range, msg string) {
 	p.errors = append(p.errors, Error{Span: span, Msg: msg})
 }
 
+func (p *Parser) currentRange() Range {
+	return Range{
+		Start: Position{Line: p.current.Line, Col: p.current.Col},
+		End:   Position{Line: p.current.Line, Col: p.current.EndCol},
+	}
+}
+
+func (p *Parser) errorCurrent(msg string) {
+	p.error(p.currentRange(), msg)
+}
+
+func (p *Parser) syncTo(types ...lexer.TokenType) {
+	for p.current.Type != lexer.EOF {
+		for _, t := range types {
+			if p.current.Type == t {
+				return
+			}
+		}
+		p.advance()
+	}
+}
+
 func (r Range) ToLSPRange() lsp.Range {
 	return lsp.Range{
 		Start: lsp.Position{
@@ -105,6 +127,11 @@ func (p *Parser) Parse() *Module {
 }
 
 func (p *Parser) parseStatement() Statement {
+	if p.current.Type == lexer.NEWLINE {
+		p.advance()
+		return nil
+	}
+
 	if p.current.Type == lexer.NAME && p.peek.Type == lexer.EQUAL {
 		return p.parseAssignment()
 	}
