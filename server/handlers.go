@@ -9,7 +9,7 @@ import (
 func (s *Server) DidOpen(p *lsp.DidOpenTextDocumentParams) {
 	s.Open(p.TextDocument)
 	doc := s.Get(p.TextDocument.URI)
-	if doc == nil {
+	if doc != nil {
 		s.analyze(doc)
 	}
 }
