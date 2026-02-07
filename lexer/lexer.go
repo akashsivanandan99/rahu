@@ -312,6 +312,8 @@ func (l *Lexer) NextToken() Token {
 			return Token{
 				Literal: "",
 				Type:    ILLEGAL,
+				Line:    l.line,
+				Col:     l.col,
 			}
 		}
 
