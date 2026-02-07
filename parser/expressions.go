@@ -79,8 +79,14 @@ func (p *Parser) parseExpression(minBP int) Expression {
 			continue
 		}
 		p.advance()
+		var right Expression
 
-		right := p.parseExpression(bp)
+		if opTok.Type == lexer.DOUBLESTAR {
+			right = p.parseExpression(bp - 1)
+		} else {
+			right = p.parseExpression(bp)
+		}
+
 		if right == nil {
 			p.errorCurrent("expected expression after operator")
 			return left
