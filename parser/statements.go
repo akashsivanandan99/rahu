@@ -193,10 +193,63 @@ func (p *Parser) parseFor() Statement {
 
 	forStmt.Body = body
 
+	endPos := Position{Line: p.current.Line, Col: p.current.Col}
+
 	if p.current.Type == lexer.DEDENT {
 		p.advance()
 	}
-	forStmt.Pos.End = Position{Line: p.current.Line, Col: p.current.Col}
+
+	orelse := []Statement{}
+	if p.current.Type == lexer.ELSE {
+		p.advance()
+
+		endPos = Position{Line: p.current.Line, Col: p.current.Col}
+		if p.current.Type != lexer.COLON {
+			p.errorCurrent("expected ':' after else")
+			p.syncTo(lexer.COLON, lexer.NEWLINE, lexer.EOF)
+			if p.current.Type != lexer.COLON {
+				return forStmt
+			}
+		}
+
+		p.advance()
+
+		if p.current.Type != lexer.NEWLINE {
+			p.errorCurrent("expected newline after 'else:'")
+			p.syncTo(lexer.NEWLINE, lexer.EOF)
+			if p.current.Type != lexer.NEWLINE {
+				return forStmt
+			}
+		}
+
+		p.advance()
+
+		if p.current.Type != lexer.INDENT {
+			p.errorCurrent("expected indent block after 'else:'")
+			p.syncTo(lexer.INDENT, lexer.DEDENT, lexer.EOF)
+			if p.current.Type != lexer.INDENT {
+				return forStmt
+			}
+		}
+
+		p.advance()
+
+		for p.current.Type != lexer.DEDENT && p.current.Type != lexer.EOF {
+			stmt := p.parseStatement()
+			if stmt != nil {
+				orelse = append(orelse, stmt)
+			}
+		}
+
+		endPos = Position{Line: p.current.Line, Col: p.current.Col}
+
+		if p.current.Type == lexer.DEDENT {
+			p.advance()
+		}
+	}
+
+	forStmt.Orelse = orelse
+	forStmt.Pos.End = endPos
 	return forStmt
 }
 
