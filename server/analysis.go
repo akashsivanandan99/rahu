@@ -14,9 +14,7 @@ func (s *Server) analyze(doc *Document) {
 
 	semErrs, resolved := analyser.Resolve(module, global)
 
-	doc.AST = module
-	doc.Symbols = resolved
-	doc.SemErrs = semErrs
+	s.SetAnalysis(doc.URI, module, resolved, semErrs)
 
 	diags := toDiagnostics(p.Errors(), semErrs)
 
