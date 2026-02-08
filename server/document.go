@@ -45,6 +45,20 @@ func (s *Server) Get(uri lsp.DocumentURI) *Document {
 	return &d
 }
 
+func (s *Server) SetAnalysis(uri lsp.DocumentURI, ast *parser.Module, symbols map[*parser.Name]*analyser.Symbol, semErrs []analyser.SemanticError) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	doc, ok := s.docs[uri]
+	if !ok {
+		return
+	}
+
+	doc.AST = ast
+	doc.Symbols = symbols
+	doc.SemErrs = semErrs
+}
+
 func (s *Server) Close(uri lsp.DocumentURI) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

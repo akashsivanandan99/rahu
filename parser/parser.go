@@ -130,12 +130,20 @@ func canStartExpression(t lexer.TokenType) bool {
 	switch t {
 	case lexer.NAME, lexer.NUMBER, lexer.STRING, lexer.LPAR, lexer.LSQB, lexer.MINUS, lexer.PLUS, lexer.NOT, lexer.TRUE, lexer.FALSE, lexer.NONE:
 		return true
+	case lexer.UNTERMINATED_STRING:
+		return false
 	default:
 		return false
 	}
 }
 
 func (p *Parser) parseStatement() Statement {
+	if p.current.Type == lexer.UNTERMINATED_STRING {
+		p.errorCurrent("unterminated string literal")
+		p.advance()
+		return nil
+	}
+
 	if p.current.Type == lexer.NEWLINE {
 		p.advance()
 		return nil

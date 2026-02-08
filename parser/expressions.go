@@ -108,6 +108,11 @@ func (p *Parser) parseExpression(minBP int) Expression {
 
 func (p *Parser) parsePrimary() Expression {
 	switch p.current.Type {
+	case lexer.UNTERMINATED_STRING:
+		p.errorCurrent("unterminated string literal")
+		p.advance()
+		return nil
+
 	case lexer.NUMBER:
 		n := &Number{
 			Value: p.current.Literal,
@@ -303,20 +308,18 @@ func (p *Parser) parseCall(funcExpr Expression) Expression {
 
 	if p.current.Type != lexer.RPAR {
 		first := p.parseExpression(LOWEST)
-		if first != nil {
-			args = append(args, first)
-		} else {
-			p.errorCurrent("expected expression in argument list")
-		}
-
-		for p.current.Type == lexer.COMMA {
-			p.advance()
-			arg := p.parseExpression(LOWEST)
-			if arg != nil {
-				args = append(args, arg)
-			} else {
-				p.errorCurrent("expected expression after ',' in argument list")
-				break
+		if first == nil {
+			p.syncTo(lexer.RPAR, lexer.NEWLINE, lexer.EOF)
+			if p.current.Type == lexer.RPAR {
+				p.advance()
+			}
+			return &Call{
+				Func: funcExpr,
+				Args: args,
+				Pos: Range{
+					Start: startPos,
+					End:   p.currentRange().End,
+				},
 			}
 		}
 	}

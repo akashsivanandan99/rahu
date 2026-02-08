@@ -208,14 +208,32 @@ func (l *Lexer) readString(quoteType byte) (string, TokenType) {
 	var sb strings.Builder
 	l.readChar() // Skip opening quote
 
-	for l.ch != quoteType && l.ch != 0 {
+	for l.ch != 0 {
+		// same quote type as string start
+		if l.ch == quoteType {
+			break
+		}
+
+		if l.ch == '\\' {
+			sb.WriteByte(l.ch)
+			l.readChar()
+
+			// incomplete escape sequence, invalid syntax
+			if l.ch == 0 {
+				return sb.String(), UNTERMINATED_STRING
+			}
+
+			sb.WriteByte(l.ch)
+			l.readChar()
+			continue
+		}
 		// Stop at closing quote or EOF
 		sb.WriteByte(l.ch)
 		l.readChar()
 	}
 
 	if l.ch != quoteType {
-		return sb.String(), ILLEGAL
+		return sb.String(), UNTERMINATED_STRING
 	}
 
 	l.readChar()
@@ -281,7 +299,7 @@ func (l *Lexer) readMultilineString(quoteType byte) (string, TokenType) {
 
 	for {
 		if l.ch == 0 {
-			return sb.String(), ILLEGAL
+			return sb.String(), UNTERMINATED_STRING
 		}
 
 		if l.ch == quoteType && l.peek() == quoteType && l.peekAhead(1) == quoteType {

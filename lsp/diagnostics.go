@@ -3,7 +3,8 @@ package lsp
 type Severity int
 
 const (
-	SeverityError Severity = iota
+	_ Severity = iota
+	SeverityError
 	SeverityWarning
 	SeverityInformation
 	SeverityHint
