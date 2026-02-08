@@ -322,6 +322,33 @@ func (p *Parser) parseCall(funcExpr Expression) Expression {
 				},
 			}
 		}
+		args = append(args, first)
+
+		for p.current.Type == lexer.COMMA {
+			p.advance() // consume ','
+
+			// trailing comma: foo(a, b,)
+			if p.current.Type == lexer.RPAR {
+				break
+			}
+
+			arg := p.parseExpression(LOWEST)
+			if arg == nil {
+				p.syncTo(lexer.RPAR, lexer.NEWLINE, lexer.EOF)
+				if p.current.Type == lexer.RPAR {
+					p.advance()
+				}
+				return &Call{
+					Func: funcExpr,
+					Args: args,
+					Pos: Range{
+						Start: startPos,
+						End:   p.currentRange().End,
+					},
+				}
+			}
+			args = append(args, arg)
+		}
 	}
 
 	if p.current.Type != lexer.RPAR {
