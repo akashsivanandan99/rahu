@@ -393,6 +393,100 @@ func TestFunctionCallNoArgs(t *testing.T) {
 	}
 }
 
+func TestFunctionCallMultipleArgs(t *testing.T) {
+	input := "result = foo(1, 2, 3)"
+	p := New(input)
+	module := p.Parse()
+
+	assign := module.Body[0].(*Assign)
+	call := assign.Value.(*Call)
+
+	if len(call.Args) != 3 {
+		t.Fatalf("expected 3 args, got %d", len(call.Args))
+	}
+
+	for i, expected := range []string{"1", "2", "3"} {
+		num, ok := call.Args[i].(*Number)
+		if !ok {
+			t.Fatalf("arg %d: expected Number, got %T", i, call.Args[i])
+		}
+		if num.Value != expected {
+			t.Fatalf("arg %d: expected %q, got %q", i, expected, num.Value)
+		}
+	}
+}
+
+func TestFunctionCallTrailingComma(t *testing.T) {
+	input := "result = foo(1, 2,)"
+	p := New(input)
+	module := p.Parse()
+
+	assign := module.Body[0].(*Assign)
+	call := assign.Value.(*Call)
+
+	if len(call.Args) != 2 {
+		t.Fatalf("expected 2 args, got %d", len(call.Args))
+	}
+}
+
+func TestFunctionCallNestedCalls(t *testing.T) {
+	input := "result = foo(bar(1), 2)"
+	p := New(input)
+	module := p.Parse()
+
+	assign := module.Body[0].(*Assign)
+	call := assign.Value.(*Call)
+
+	if len(call.Args) != 2 {
+		t.Fatalf("expected 2 args, got %d", len(call.Args))
+	}
+
+	innerCall, ok := call.Args[0].(*Call)
+	if !ok {
+		t.Fatalf("expected first arg to be Call, got %T", call.Args[0])
+	}
+
+	innerFunc, ok := innerCall.Func.(*Name)
+	if !ok || innerFunc.ID != "bar" {
+		t.Fatalf("expected inner call to 'bar', got %v", innerCall.Func)
+	}
+
+	if len(innerCall.Args) != 1 {
+		t.Fatalf("expected 1 inner arg, got %d", len(innerCall.Args))
+	}
+}
+
+func TestFunctionCallExpressionArgs(t *testing.T) {
+	input := "result = foo(1 + 2, x * y)"
+	p := New(input)
+	module := p.Parse()
+
+	assign := module.Body[0].(*Assign)
+	call := assign.Value.(*Call)
+
+	if len(call.Args) != 2 {
+		t.Fatalf("expected 2 args, got %d", len(call.Args))
+	}
+
+	// First arg should be BinOp(1, +, 2)
+	binop1, ok := call.Args[0].(*BinOp)
+	if !ok {
+		t.Fatalf("expected first arg to be BinOp, got %T", call.Args[0])
+	}
+	if binop1.Op != Add {
+		t.Fatalf("expected Add, got %v", binop1.Op)
+	}
+
+	// Second arg should be BinOp(x, *, y)
+	binop2, ok := call.Args[1].(*BinOp)
+	if !ok {
+		t.Fatalf("expected second arg to be BinOp, got %T", call.Args[1])
+	}
+	if binop2.Op != Mult {
+		t.Fatalf("expected Mult, got %v", binop2.Op)
+	}
+}
+
 // ===== Control Flow Tests =====
 
 func TestIfStatement(t *testing.T) {
