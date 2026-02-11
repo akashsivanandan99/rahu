@@ -9,7 +9,7 @@ func Register(s *Server) {
 		"initialize",
 		jsonrpc.AdaptRequest(s.Initialize),
 	)
-	jsonrpc.RegisterNofication(
+	jsonrpc.RegisterNotification(
 		"textDocument/didOpen",
 		jsonrpc.AdaptNotification(s.DidOpen),
 	)
@@ -19,17 +19,17 @@ func Register(s *Server) {
 		jsonrpc.AdaptRequest(s.Hover),
 	)
 
-	jsonrpc.RegisterNofication(
+	jsonrpc.RegisterNotification(
 		"textDocument/didChange",
 		jsonrpc.AdaptNotification(s.DidChange),
 	)
 
-	jsonrpc.RegisterNofication(
+	jsonrpc.RegisterNotification(
 		"textDocument/didClose",
 		jsonrpc.AdaptNotification(s.DidClose),
 	)
 
-	jsonrpc.RegisterNofication(
+	jsonrpc.RegisterNotification(
 		"Initialized",
 		jsonrpc.AdaptNotification(s.Initialized),
 	)
@@ -39,7 +39,7 @@ func Register(s *Server) {
 		jsonrpc.AdaptRequest(s.Shutdown),
 	)
 
-	jsonrpc.RegisterNofication(
+	jsonrpc.RegisterNotification(
 		"exit",
 		jsonrpc.AdaptNotification(s.Exit),
 	)
