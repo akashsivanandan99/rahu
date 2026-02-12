@@ -54,6 +54,11 @@ func (s *Server) Diagnostic(p *lsp.DocumentDiagnosticParams) (*lsp.DocumentDiagn
 }
 
 func (s *Server) publishDiagnostics(uri lsp.DocumentURI, diags []lsp.Diagnostic) {
+	// Skip if no connection available
+	if s.conn == nil {
+		return
+	}
+
 	// If document no longer exists, clear diagnostics
 	if s.Get(uri) == nil {
 		_ = s.conn.Notify("textDocument/publishDiagnostics",

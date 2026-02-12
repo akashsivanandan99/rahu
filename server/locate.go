@@ -5,6 +5,9 @@ import (
 )
 
 func nameAtPos(module *parser.Module, pos parser.Position) *parser.Name {
+	if module == nil {
+		return nil
+	}
 	for _, stmt := range module.Body {
 		if name := nameInStmt(stmt, pos); name != nil {
 			return name
@@ -24,6 +27,9 @@ func nameInStmt(stmt parser.Statement, pos parser.Position) *parser.Name {
 			if name := nameInExpr(targ, pos); name != nil {
 				return name
 			}
+		}
+		if name := nameInExpr(v.Value, pos); name != nil {
+			return name
 		}
 
 	case *parser.FunctionDef:
