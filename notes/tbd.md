@@ -2,7 +2,7 @@
 
 This document tracks bugs, correctness issues, and improvements across the entire codebase.
 
-Last updated: 2026-02-06
+Last updated: 2026-02-11
 
 ---
 
@@ -94,12 +94,27 @@ The hover handler always returns `{"contents": "ok"}` regardless of cursor posit
 
 ---
 
+### 13b. `textDocument/diagnostic` Handler Is a Stub
+
+**Location:** `server/handlers.go:45-51`
+
+**Problem:**
+The pull-diagnostic handler (`textDocument/diagnostic`) always returns an empty `{"kind": "full", "items": []}` report. It was added to silence `MethodNotFound` errors from clients that use the LSP 3.17 pull diagnostics model. Real diagnostics are still delivered only via the push model (`textDocument/publishDiagnostics`).
+
+**Fix:** Return cached diagnostics from the `Document` instead of an empty list. Requires storing `[]Diagnostic` on the `Document` struct during `analyze()`.
+
+**Impact:** Clients using pull diagnostics get no results; push diagnostics still work.
+
+---
+
 ### 14. No Go-to-Definition, Completion, or References
 
 **Problem:**
 The three most impactful LSP features are not implemented. The analyser already builds a `Resolved` map (`*Name -> *Symbol` with source spans) that could support go-to-definition and find-references relatively quickly.
 
 **Impact:** The LSP is not yet productive for daily use.
+
+**Roadmap:** See detailed implementation plan at [goto-definition-roadmap.md](./goto-definition-roadmap.md)
 
 ---
 
@@ -283,6 +298,7 @@ The following issues from the original `tbd.md` have been resolved:
 | 11 | High | No try / except / finally | Parser |
 | 12 | High | No augmented assignment | Parser |
 | 13 | High | Hover is a stub | Server |
+| 13b | High | `textDocument/diagnostic` is a stub | Server |
 | 14 | High | No go-to-def, completion, references | Server |
 | 15 | Medium | `panic()` instead of error returns | Code quality |
 | 16 | Medium | Silently ignored errors (9 instances) | Code quality |

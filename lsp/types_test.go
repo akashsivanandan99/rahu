@@ -216,17 +216,17 @@ func TestDiagnosticMarshalUnmarshal(t *testing.T) {
 
 func TestSeverityConstants(t *testing.T) {
 	// Test that severity constants have expected values
-	if SeverityError != 0 {
-		t.Errorf("SeverityError should be 0, got %d", SeverityError)
+	if SeverityError != 1 {
+		t.Errorf("SeverityError should be 1, got %d", SeverityError)
 	}
-	if SeverityWarning != 1 {
-		t.Errorf("SeverityWarning should be 1, got %d", SeverityWarning)
+	if SeverityWarning != 2 {
+		t.Errorf("SeverityWarning should be 2, got %d", SeverityWarning)
 	}
-	if SeverityInformation != 2 {
-		t.Errorf("SeverityInformation should be 2, got %d", SeverityInformation)
+	if SeverityInformation != 3 {
+		t.Errorf("SeverityInformation should be 3, got %d", SeverityInformation)
 	}
-	if SeverityHint != 3 {
-		t.Errorf("SeverityHint should be 3, got %d", SeverityHint)
+	if SeverityHint != 4 {
+		t.Errorf("SeverityHint should be 4, got %d", SeverityHint)
 	}
 }
 
@@ -277,9 +277,8 @@ func TestInitializeParamsMarshalUnmarshal(t *testing.T) {
 func TestInitializeResultMarshalUnmarshal(t *testing.T) {
 	original := InitializeResult{
 		Capabilities: ServerCapabilities{
-			TextDocumentSync:   TDSKFull,
-			HoverProvider:      true,
-			DiagnosticProvider: true,
+			TextDocumentSync: TDSKFull,
+			HoverProvider:    true,
 		},
 		ServerInfo: &ClientInfo{
 			Name:    "rahu",

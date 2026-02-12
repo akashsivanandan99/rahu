@@ -35,6 +35,8 @@ func (b *ScopeBuilder) visitStmt(stmt parser.Statement) {
 
 	case *parser.WhileLoop:
 		b.visitWhile(s)
+	case *parser.ClassDef:
+		b.visitClassDef(s)
 	}
 }
 
@@ -78,6 +80,25 @@ func (b *ScopeBuilder) visitAssign(a *parser.Assign) {
 			})
 		}
 	}
+}
+
+func (b *ScopeBuilder) visitClassDef(c *parser.ClassDef) {
+	classSym := &Symbol{
+		Name: c.Name,
+		Kind: SymClass,
+		Span: c.Pos,
+	}
+	_ = b.current.Define(classSym)
+
+	classScope := NewScope(b.current, ScopeClass)
+	classSym.Inner = classScope
+	prev := b.current
+	b.current = classScope
+
+	for _, stmt := range c.Body {
+		b.visitStmt(stmt)
+	}
+	b.current = prev
 }
 
 func (b *ScopeBuilder) visitFunctionDef(f *parser.FunctionDef) {

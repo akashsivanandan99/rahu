@@ -15,6 +15,6 @@ func RegisterRequest(method string, h RequestHandler) {
 	requestHandlers[method] = h
 }
 
-func RegisterNofication(method string, h NotificationHandler) {
+func RegisterNotification(method string, h NotificationHandler) {
 	notificationHandlers[method] = h
 }

@@ -16,6 +16,9 @@ type Resolver struct {
 
 	Resolved   map[*parser.Name]*Symbol
 	inFunction bool
+
+	inClass      bool
+	currentClass *Symbol
 }
 
 type SemanticError struct {
@@ -46,6 +49,36 @@ func (r *Resolver) visitStmt(stmt parser.Statement) {
 		for _, t := range s.Targets {
 			r.visitExpr(t, Write)
 		}
+
+	case *parser.ClassDef:
+		for _, base := range s.Bases {
+			if base != nil {
+				r.visitExpr(base, Read)
+			}
+		}
+
+		classSym := r.current.Symbols[s.Name]
+
+		if classSym == nil || classSym.Inner == nil {
+			r.error(s.Pos, "internal compiler error: missing class symbol or scope for: "+s.Name)
+			return
+		}
+
+		prevScope := r.current
+		prevClass := r.currentClass
+		prevInClass := r.inClass
+
+		r.current = classSym.Inner
+		r.currentClass = classSym
+		r.inClass = true
+
+		for _, stmt := range s.Body {
+			r.visitStmt(stmt)
+		}
+
+		r.current = prevScope
+		r.currentClass = prevClass
+		r.inClass = prevInClass
 
 	case *parser.FunctionDef:
 		for _, arg := range s.Args {
