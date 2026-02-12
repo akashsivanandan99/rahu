@@ -40,6 +40,7 @@ const (
 	ScopeFunction
 	ScopeBlock
 	ScopeBuiltin
+	ScopeClass
 )
 
 type Scope struct {
