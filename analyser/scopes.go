@@ -105,7 +105,7 @@ func (b *ScopeBuilder) visitFunctionDef(f *parser.FunctionDef) {
 	fnSym := &Symbol{
 		Name: f.Name,
 		Kind: SymFunction,
-		Span: f.Pos,
+		Span: f.NamePos,
 	}
 
 	_ = b.current.Define(fnSym)

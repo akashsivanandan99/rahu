@@ -75,6 +75,15 @@ func nameInStmt(stmt parser.Statement, pos parser.Position) *parser.Name {
 		}
 		return nil
 
+	case *parser.ExprStmt:
+		return nameInExpr(v.Value, pos)
+
+	case *parser.Return:
+		if v.Value != nil {
+			return nameInExpr(v.Value, pos)
+		}
+		return nil
+
 	}
 
 	return nil
@@ -151,8 +160,17 @@ func nameInExpr(expr parser.Expression, pos parser.Position) *parser.Name {
 }
 
 func contains(rng parser.Range, pos parser.Position) bool {
-	return pos.Line >= rng.Start.Line &&
-		pos.Line <= rng.End.Line &&
-		pos.Col >= rng.Start.Col &&
-		pos.Col <= rng.End.Col
+	if pos.Line < rng.Start.Line || pos.Line > rng.End.Line {
+		return false
+	}
+
+	if pos.Line == rng.Start.Line && pos.Col < rng.Start.Col {
+		return false
+	}
+
+	if pos.Line == rng.End.Line && pos.Col > rng.End.Col+1 {
+		return false
+	}
+
+	return true
 }
