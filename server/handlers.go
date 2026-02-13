@@ -2,10 +2,10 @@ package server
 
 import (
 	"rahu/jsonrpc"
-	"rahu/parser"
 
 	a "rahu/analyser"
 	"rahu/lsp"
+	"rahu/parser"
 )
 
 func (s *Server) DidOpen(p *lsp.DidOpenTextDocumentParams) {
@@ -85,24 +85,21 @@ func (s *Server) Definition(p *lsp.DefinitionParams) (*lsp.Location, *jsonrpc.Er
 		return nil, jsonrpc.InvalidParamsError(nil)
 	}
 	pos := parser.Position{
-		Line: p.Position.Line,
-		Col:  p.Position.Character,
+		Line: p.Position.Line + 1,
+		Col:  p.Position.Character + 1,
 	}
 
 	name := nameAtPos(doc.AST, pos)
 	if name == nil {
-		// TODO: write proper error
 		return nil, jsonrpc.InvalidParamsError(nil)
 	}
 
 	sym, ok := doc.Symbols[name]
 	if !ok {
-		// TODO: write proper error
 		return nil, jsonrpc.InvalidParamsError(nil)
 	}
 
-	if sym.Kind == a.SymBuiltin || sym.Kind == a.SymConstant || sym.Kind == a.SymType {
-		// TODO: write proper error
+	if sym.Kind == a.SymBuiltin || sym.Kind == a.SymConstant || sym.Kind == a.SymType || sym.Span.IsEmpty() {
 		return nil, jsonrpc.InvalidParamsError(nil)
 	}
 
